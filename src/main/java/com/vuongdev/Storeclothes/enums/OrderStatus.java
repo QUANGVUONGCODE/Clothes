@@ -1,0 +1,8 @@
+package com.vuongdev.Storeclothes.enums;
+
+public enum OrderStatus {
+    PENDING,
+    SHIPPED,
+    DELIVERED,
+    CANCELLED
+}
