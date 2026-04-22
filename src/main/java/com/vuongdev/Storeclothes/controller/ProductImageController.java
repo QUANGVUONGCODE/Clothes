@@ -1,9 +1,16 @@
 package com.vuongdev.Storeclothes.controller;
 
 import com.vuongdev.Storeclothes.dto.response.ApiResponse;
+import com.vuongdev.Storeclothes.dto.response.ProductVariantResponse;
+import com.vuongdev.Storeclothes.entity.Product;
 import com.vuongdev.Storeclothes.entity.ProductImage;
 import com.vuongdev.Storeclothes.exception.AppException;
 import com.vuongdev.Storeclothes.exception.ErrorCode;
+import com.vuongdev.Storeclothes.mapper.ProductVariantMapper;
+import com.vuongdev.Storeclothes.repository.ProductImageRopository;
+import com.vuongdev.Storeclothes.repository.ProductRepository;
+import com.vuongdev.Storeclothes.repository.ProductVariantRepository;
+import com.vuongdev.Storeclothes.service.EmbeddingService;
 import com.vuongdev.Storeclothes.service.ProductImageService;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -22,7 +29,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,6 +38,10 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ProductImageController {
     ProductImageService productImageService;
+    EmbeddingService embeddingService;
+    ProductImageRopository productImageRopository;
+    ProductVariantRepository productVariantRepository;
+    ProductVariantMapper productVariantMapper;
 
     @NonFinal
     @Value("${app.upload-dir}")
@@ -41,11 +53,11 @@ public class ProductImageController {
             @RequestParam("colorId") Long colorId,
             @RequestPart("files") List<MultipartFile> files
     ) throws IOException {
-        try{
+        try {
             return ApiResponse.<List<ProductImage>>builder()
                     .result(productImageService.uploadProductImage(files, productId, colorId))
                     .build();
-        }catch (AppException e){
+        } catch (AppException e) {
             return ApiResponse.<String>builder()
                     .result(e.getMessage())
                     .build();
@@ -66,7 +78,7 @@ public class ProductImageController {
     public ApiResponse<String> deleteeImagesByProductAndColor(
             @RequestParam("productId") Long productId,
             @RequestParam("colorId") Long colorId
-    ){
+    ) {
         productImageService.deleteProductImage(productId, colorId);
         return ApiResponse.<String>builder()
                 .result("Delete successfully image")
@@ -75,20 +87,67 @@ public class ProductImageController {
 
 
     @GetMapping("/images/{filename}")
-    public ResponseEntity<Resource> getImage(@PathVariable String filename){
+    public ResponseEntity<Resource> getImage(@PathVariable String filename) {
         try {
             Path filePath = Paths.get(uploadDir).resolve(filename);
             Resource resource = new UrlResource(filePath.toUri());
-            if(!resource.exists() || !resource.isReadable()){
+            if (!resource.exists() || !resource.isReadable()) {
                 throw new AppException(ErrorCode.INVALID_IMAGE);
             }
             String contentType = Files.probeContentType(filePath);
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
                     .body(resource);
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new AppException(ErrorCode.INVALID_IMAGE);
         }
+    }
+
+    @PostMapping("/search-by-image")
+    public ResponseEntity<?> searchByImage(
+            @RequestParam MultipartFile image) throws IOException {
+
+        // 1. Lấy embedding của ảnh người dùng gửi lên
+        List<Double> queryEmbedding = embeddingService.getEmbedding(image);
+
+        // 2. Lấy tất cả ảnh có embedding từ DB
+        List<ProductImage> allImages = productImageRopository.findAllByEmbeddingIsNotNull();
+
+        // 3. Tính similarity từng ảnh, group theo productId lấy score cao nhất
+        Map<Long, Double> bestScoreByProduct = new HashMap<>();
+        Map<Long, Product> productMap = new HashMap<>();
+
+        for (ProductImage img : allImages) {
+            try {
+                List<Double> vec = embeddingService.fromJson(img.getEmbedding());
+                double score = embeddingService.cosineSimilarity(queryEmbedding, vec);
+                Long productId = img.getProduct().getId();
+
+                System.out.println("Product: " + img.getProduct().getName() + " | Score: " + score);
+
+                // Giữ score cao nhất cho mỗi product
+                if (!bestScoreByProduct.containsKey(productId)
+                        || score > bestScoreByProduct.get(productId)) {
+                    bestScoreByProduct.put(productId, score);
+                    productMap.put(productId, img.getProduct());
+                }
+            } catch (Exception e) {
+                System.out.println("Lỗi ảnh id=" + img.getId() + ": " + e.getMessage());
+            }
+        }
+
+        // 4. Sort theo score, lấy top 10
+        double THRESHOLD = 0.85; // ← để 0 trước để debug, sau chỉnh lại
+        List<Product> result = bestScoreByProduct.entrySet().stream()
+                .filter(e -> e.getValue() >= THRESHOLD)
+                .sorted(Comparator.comparingDouble(e -> -e.getValue()))
+                .limit(10)
+                .map(e -> productMap.get(e.getKey()))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(ApiResponse.<List<Product>>builder()
+                .result(result)
+                .build());
     }
 
 }

@@ -36,6 +36,7 @@ public class ProductImageService {
     ProductRepository productRepository;
     ColorRepository colorRepository;
     ProductService productService;
+    EmbeddingService embeddingService;
 
     @NonFinal
     @Value("${app.upload-dir}")
@@ -82,11 +83,21 @@ public class ProductImageService {
             }
 
             String fileName = storeFile(file);
+
+            String embeddingJson = null;
+            try {
+                List<Double> embedding = embeddingService.getEmbedding(file);
+                embeddingJson = embeddingService.toJson(embedding);
+            } catch (Exception e) {
+                System.out.println("Không tạo được embedding: " + e.getMessage());
+            }
             ProductImage productImage = productVariantService.createProductImage(
                     productId,
                     colorId,
                     ProductImageRequest.builder()
                             .imageUrl(fileName)
+                            .embedding(embeddingJson)
+                            .isMain(productImages.isEmpty())
                             .build()
             );
 

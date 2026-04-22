@@ -31,6 +31,23 @@ public enum ErrorCode {
     INVALID_SIZE_IMAGE(1021, "Invalid size image", HttpStatus.BAD_REQUEST),
     INVALID_IMAGE_URL(1022, "Invalid image url", HttpStatus.BAD_REQUEST),
     ROLE_EXISTS(1023, "Role already exists", HttpStatus.BAD_REQUEST),
+    PHONE_NUMBER_LENGTH(1024, "Phone number length must be 10", HttpStatus.BAD_REQUEST),
+    NOT_BLANK_EMAIL(1025, "Email must not be blank", HttpStatus.BAD_REQUEST),
+    PASSWORD_INVALID(1026, "Password invalid", HttpStatus.BAD_REQUEST),
+    PHONE_NUMBER_EXISTS(1027, "Phone number already exists", HttpStatus.BAD_REQUEST),
+    EMAIL_EXISTS(1028, "Email already exists", HttpStatus.BAD_REQUEST),
+    RETYPE_PASSWORD_WRONG(1029, "Retype password wrong", HttpStatus.BAD_REQUEST),
+    INVALID_USER_ID(1030, "Invalid user id", HttpStatus.BAD_REQUEST),
+    UNAUTHENTICATED(1031, "Unauthorized", HttpStatus.UNAUTHORIZED),
+    PHONE_NUMBER_INVALID(1032, "Phone number invalid", HttpStatus.BAD_REQUEST),
+    USER_NOT_EXISTS(1033, "User not exists", HttpStatus.BAD_REQUEST),
+    INVALID_TOKEN(1034, "Invalid Token", HttpStatus.BAD_REQUEST),
+    USER_EXISTS(1035, "User already exists", HttpStatus.BAD_REQUEST),
+    PAYMENT_EXISTS(1036, "Payment already exists", HttpStatus.BAD_REQUEST),
+    INVALID_PAYMENT_ID(1037, "Invalid payment id", HttpStatus.BAD_REQUEST),
+    USER_ID_REQUIRED(1038, "User id required", HttpStatus.BAD_REQUEST),
+    INVALID_ORDER_ID(1039, "Invalid order id", HttpStatus.BAD_REQUEST),
+
 
     ;
 

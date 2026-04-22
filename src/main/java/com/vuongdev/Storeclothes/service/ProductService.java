@@ -15,6 +15,8 @@ import com.vuongdev.Storeclothes.repository.SubCategoryRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -48,16 +50,47 @@ public class ProductService {
         return productMapper.mapToProductResponse(product);
     }
 
+    public ProductResponse getProductByid(Long id){
+        Product product = productRepository.findById(id).orElseThrow(
+                () -> new AppException(ErrorCode.INVALID_ID_PRODUCT)
+        );
+        return productMapper.mapToProductResponse(product);
+    }
+
     public List<ProductResponse> getAllProducts(){
         return productRepository.findAll().stream().map(productMapper::mapToProductResponse).toList();
     }
 
 
+
+
+
     public List<ProductResponse> getAllProductsBySubCategoryId(Long subCategoryId){
-        return productRepository.findAllBySubCategoryId(subCategoryId)
+        return productRepository.findAllActiveBySubCategoryId(subCategoryId)
                 .stream()
                 .map(productMapper::mapToProductResponse)
                 .toList();
+    }
+
+    public Page<ProductResponse> searchProductsBySubCategoryId(Long subCategoryId, String keyword, Pageable pageable) {
+        return productRepository.searchProductsBySubCategoryId(subCategoryId, keyword, pageable)
+                .map(productMapper::mapToProductResponse);
+    }
+
+
+    public Page<ProductResponse> searchProductsBySubCategoryId(String keyword, Pageable pageable) {
+        return productRepository.searchActiveProducts(keyword, pageable).map(productMapper::mapToProductResponse);
+    }
+
+    public Page<ProductResponse> searchProductsByCategoryId(Long categoryId, String keyword, Pageable pageable){
+        return productRepository.searchProductsByCategoryId(categoryId, keyword, pageable)
+                .map(productMapper::mapToProductResponse);
+    }
+
+
+    public Page<ProductResponse> searchProductsByDepartmentId(Long departmentId, String keyword, Pageable pageable) {
+        return productRepository.searchProductsByDepartmentId(departmentId, keyword, pageable)
+                .map(productMapper::mapToProductResponse);
     }
 
 
@@ -151,4 +184,10 @@ public class ProductService {
                         .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
         );
     }
+
+
+    public Long countProducts() {
+        return productRepository.count();
+    }
+
 }

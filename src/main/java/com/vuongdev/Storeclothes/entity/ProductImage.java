@@ -33,4 +33,7 @@ public class ProductImage {
 
     @Column(name = "is_main")
     Boolean isMain;
+
+    @Column(columnDefinition = "LONGTEXT")
+    String embedding;
 }

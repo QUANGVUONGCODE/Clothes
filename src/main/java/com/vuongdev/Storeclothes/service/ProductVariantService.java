@@ -154,6 +154,7 @@ public class ProductVariantService {
         ProductImage productImage = ProductImage.builder()
                 .product(product)
                 .color(color)
+                .embedding(request.getEmbedding())
                 .imageUrl(request.getImageUrl())
                 .build();
 
