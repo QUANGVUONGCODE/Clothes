@@ -41,7 +41,16 @@ public class SercurityConfig {
     private static final String productVariant = "/product-variants";
     private static final String product = "/products";
     private static final String paymentEntryPoint = "/payments";
-
+    private static final String orderEntryPoint = "/orders";
+    private static final String orderDetailEntryPoint = "/order-details";
+    private static final String productImageEntryPoint = "/product-images";
+    private static final String departmentEntryPoint = "/departments";
+    private static final String categoryEntryPoint = "/categories";
+    private static final String subCategoryEntryPoint = "/sub-categories";
+    private static final String subCategoryImageEntryPoint = "/sub-category-images";
+    private static final String dashboardEntryPoint = "/dashboard";
+    private static final String colorEntryPoint = "/colors";
+    private static final String sizeEntryPoint = "/sizes";
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception{
         log.info("=== Security Filter Chain Debug ===");
@@ -58,8 +67,14 @@ public class SercurityConfig {
                         //product
                         .requestMatchers(HttpMethod.POST, api + product)
                         .hasRole(RolePlay.ADMIN.name())
+                        .requestMatchers(HttpMethod.PUT, api + product + "/{id}")
+                        .hasRole(RolePlay.ADMIN.name())
+                        .requestMatchers(HttpMethod.GET, api + product + "/{id}"    )
+                        .permitAll()
                         .requestMatchers(HttpMethod.GET, api + product + "/**")
                         .permitAll()
+                        .requestMatchers(HttpMethod.DELETE, api + product + "/{id}")
+                        .hasRole(RolePlay.ADMIN.name())
 
 
                         //user
@@ -73,7 +88,7 @@ public class SercurityConfig {
                         //product Variant
                         .requestMatchers(HttpMethod.POST, api + productVariant)
                         .hasRole(RolePlay.ADMIN.name())
-                        .requestMatchers(HttpMethod.GET, api + productVariant)
+                        .requestMatchers(HttpMethod.GET, api + productVariant + "/**")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, api + productVariant + "/by-ids" + "/**")
                         .permitAll()
@@ -91,6 +106,89 @@ public class SercurityConfig {
                         .hasRole(RolePlay.ADMIN.name())
                         .requestMatchers(HttpMethod.DELETE, api + paymentEntryPoint +"/{id}")
                         .hasRole(RolePlay.ADMIN.name())
+
+                        //Order
+                        .requestMatchers(HttpMethod.GET, api + orderEntryPoint + "/**")
+                        .hasAnyRole(RolePlay.ADMIN.name(), RolePlay.USER.name())
+                        .requestMatchers(HttpMethod.POST, api + orderEntryPoint)
+                        .hasAnyRole(RolePlay.ADMIN.name(), RolePlay.USER.name())
+                        .requestMatchers(HttpMethod.PUT, api + orderEntryPoint + "/{id}")
+                        .hasAnyRole(RolePlay.ADMIN.name(), RolePlay.USER.name())
+                        .requestMatchers(HttpMethod.DELETE, api + orderEntryPoint + "/{id}")
+                        .hasAnyRole(RolePlay.ADMIN.name(), RolePlay.USER.name())
+                        .requestMatchers(HttpMethod.GET, api + orderDetailEntryPoint + "/**")
+                        .hasAnyRole(RolePlay.ADMIN.name(), RolePlay.USER.name())
+
+
+                        //orderDetail
+                        .requestMatchers(HttpMethod.POST, api + orderDetailEntryPoint)
+                        .hasAnyRole(RolePlay.ADMIN.name(), RolePlay.USER.name())
+                        .requestMatchers(HttpMethod.DELETE, api + orderDetailEntryPoint + "/{id}")
+                        .hasAnyRole(RolePlay.ADMIN.name(), RolePlay.USER.name())
+                        .requestMatchers(HttpMethod.GET, api + orderDetailEntryPoint + "/{id}")
+                        .hasAnyRole(RolePlay.ADMIN.name(), RolePlay.USER.name())
+                        .requestMatchers(HttpMethod.PUT, api + orderDetailEntryPoint + "/{id}")
+                        .hasAnyRole(RolePlay.ADMIN.name(), RolePlay.USER.name())
+                        .requestMatchers(HttpMethod.GET, api+ orderDetailEntryPoint + "/**")
+                        .hasAnyRole(RolePlay.ADMIN.name(), RolePlay.USER.name())
+
+
+                        //product-image
+                        .requestMatchers(HttpMethod.GET, api + productImageEntryPoint + "/**")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, api + productImageEntryPoint + "/search-by-image")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, api + productImageEntryPoint + "/**")
+                        .hasRole(RolePlay.ADMIN.name())
+                        .requestMatchers(HttpMethod.DELETE, api + productImageEntryPoint )
+                        .hasRole(RolePlay.ADMIN.name())
+
+
+                        //department
+                        .requestMatchers(HttpMethod.POST, api + departmentEntryPoint)
+                        .hasRole(RolePlay.ADMIN.name())
+                        .requestMatchers(HttpMethod.GET, api + departmentEntryPoint + "/**")
+                        .permitAll()
+
+
+                        //category
+                        .requestMatchers(HttpMethod.POST, api + categoryEntryPoint)
+                        .hasRole(RolePlay.ADMIN.name())
+                        .requestMatchers(HttpMethod.GET, api + categoryEntryPoint + "/**")
+                        .permitAll()
+
+
+                        //sub category
+                        .requestMatchers(HttpMethod.POST, api + subCategoryEntryPoint)
+                        .hasRole(RolePlay.ADMIN.name())
+                        .requestMatchers(HttpMethod.GET, api + subCategoryEntryPoint + "/**")
+                        .permitAll()
+
+
+                        //sub category image
+                        .requestMatchers(HttpMethod.POST, api + subCategoryImageEntryPoint + "/upload" + "/**")
+                        .hasRole(RolePlay.ADMIN.name())
+                        .requestMatchers(HttpMethod.GET, api + subCategoryImageEntryPoint + "/**")
+                        .permitAll()
+
+                        //dashboard
+                        .requestMatchers(HttpMethod.GET, api + dashboardEntryPoint + "/**")
+                        .hasRole(RolePlay.ADMIN.name())
+
+                        //color
+
+                        .requestMatchers(HttpMethod.GET, api + colorEntryPoint)
+                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, api + colorEntryPoint)
+                        .hasRole(RolePlay.ADMIN.name())
+                        .requestMatchers(HttpMethod.GET, api + colorEntryPoint + "/**")
+                        .permitAll()
+
+
+                        //size
+
+                        .requestMatchers(HttpMethod.GET, api + sizeEntryPoint)
+                        .permitAll()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwtConfigurer -> jwtConfigurer
@@ -124,7 +222,7 @@ public class SercurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource(){
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.addAllowedOrigin("http://localhost:3000");
+        corsConfiguration.addAllowedOrigin("http://localhost:5178");
         corsConfiguration.addAllowedMethod("*");
         corsConfiguration.addAllowedHeader("*");
         corsConfiguration.setAllowCredentials(true);

@@ -50,4 +50,7 @@ public class OrderResponse {
     @JsonProperty("payment")
     Payment payment;
 
+    @JsonProperty("active")
+    Boolean active;
+
 }

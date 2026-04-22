@@ -14,4 +14,5 @@ public class SubCategoryResponse {
     Long id;
     String name;
     Category category;
+    String thumbnail;
 }

@@ -1,6 +1,7 @@
 package com.vuongdev.Storeclothes.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.Column;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -25,4 +26,7 @@ public class ProductImageRequest {
 
     @JsonProperty(value = "is_main")
     Boolean isMain;
+
+    @JsonProperty(value = "embedding")
+    String embedding;
 }

@@ -47,7 +47,7 @@ public class Order {
     @Column(name = "note", length = 255)
     String note;
 
-    @Column(name = "total_money", nullable = false, precision = 12, scale = 2)
+    @Column(name = "total_money")
     BigDecimal totalMoney;
 
     @Column(name = "status")
@@ -59,6 +59,9 @@ public class Order {
 
     @Column(name = "created_at")
     LocalDateTime createdAt;
+
+    @Column(name = "active")
+    Boolean active;
 
     @Column(name = "updated_at")
     LocalDateTime updatedAt;

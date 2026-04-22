@@ -50,7 +50,7 @@ public class UserService {
         User user = userMapper.mapToUser(userRequest);
         user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
         Role role = new Role();
-        role.setId(2L);
+        role.setId(1L);
         role.setName(RolePlay.USER.name());
         user.setRole(role);
         user.setActive(true);

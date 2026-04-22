@@ -45,6 +45,8 @@ public enum ErrorCode {
     USER_EXISTS(1035, "User already exists", HttpStatus.BAD_REQUEST),
     PAYMENT_EXISTS(1036, "Payment already exists", HttpStatus.BAD_REQUEST),
     INVALID_PAYMENT_ID(1037, "Invalid payment id", HttpStatus.BAD_REQUEST),
+    USER_ID_REQUIRED(1038, "User id required", HttpStatus.BAD_REQUEST),
+    INVALID_ORDER_ID(1039, "Invalid order id", HttpStatus.BAD_REQUEST),
 
 
     ;

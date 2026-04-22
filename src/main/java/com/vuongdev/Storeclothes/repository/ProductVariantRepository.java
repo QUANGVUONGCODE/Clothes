@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ProductVariantRepository extends JpaRepository<ProductVariant, Long> {
     boolean existsBySku(String sku);
@@ -16,6 +17,9 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
     List<ProductVariant> findByProduct_Id(Long productId);
 
     boolean existsBySkuAndIdNot(String sku, Long id);
+
+    Optional<ProductVariant> findByProductIdAndColorId(Long productId, Long colorId);
+
 
     @Query(value = """
             select pv

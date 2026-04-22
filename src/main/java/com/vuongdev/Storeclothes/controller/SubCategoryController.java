@@ -2,11 +2,15 @@ package com.vuongdev.Storeclothes.controller;
 
 import com.vuongdev.Storeclothes.dto.request.SubCategoryRequest;
 import com.vuongdev.Storeclothes.dto.response.ApiResponse;
+import com.vuongdev.Storeclothes.dto.response.SubCategoryListResponse;
 import com.vuongdev.Storeclothes.dto.response.SubCategoryResponse;
 import com.vuongdev.Storeclothes.service.SubCategoryService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -48,4 +52,25 @@ public class SubCategoryController {
                 .build();
     }
 
+    @GetMapping("/search")
+    ApiResponse<SubCategoryListResponse> getSubCategoriesBySearch(
+            @RequestParam(defaultValue = "0", name = "page") int page,
+            @RequestParam(defaultValue = "10", name = "limit") int limit,
+            @RequestParam(defaultValue = "", name = "department_id") Long departmentId,
+            @RequestParam(defaultValue = "", name = "category_id") Long categoryId
+    ){
+        PageRequest pageRequest = PageRequest.of(page, limit, Sort.by("id").ascending());
+
+
+        Page<SubCategoryResponse> subCategoryResponsesPage = subCategoryService.searchSubCategories(pageRequest, categoryId, departmentId);
+        List<SubCategoryResponse> subCategoryResponses = subCategoryResponsesPage.getContent();
+        int totalPages = subCategoryResponsesPage.getNumber();
+        return ApiResponse.<SubCategoryListResponse>builder()
+                .result(SubCategoryListResponse.builder()
+                        .subCategoryResponseList(subCategoryResponses)
+                        .page(totalPages)
+                        .build())
+                .build();
+
+    }
 }
