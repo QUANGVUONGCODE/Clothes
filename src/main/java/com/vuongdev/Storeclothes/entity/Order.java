@@ -53,6 +53,9 @@ public class Order {
     @Column(name = "status")
     String status;
 
+    @Column(name = "payment_status")
+    String paymentStatus;
+
     @ManyToOne
     @JoinColumn(name = "payment_id")
     Payment payment;
@@ -62,6 +65,9 @@ public class Order {
 
     @Column(name = "active")
     Boolean active;
+
+    @Column(name = "vnp_txn_ref")
+    String vnpTxnRef;
 
     @Column(name = "updated_at")
     LocalDateTime updatedAt;

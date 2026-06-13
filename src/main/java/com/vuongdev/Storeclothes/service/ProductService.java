@@ -64,7 +64,6 @@ public class ProductService {
 
 
 
-
     public List<ProductResponse> getAllProductsBySubCategoryId(Long subCategoryId){
         return productRepository.findAllActiveBySubCategoryId(subCategoryId)
                 .stream()

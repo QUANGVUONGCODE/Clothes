@@ -5,6 +5,7 @@ import com.vuongdev.Storeclothes.dto.request.OrderUpdateRequest;
 import com.vuongdev.Storeclothes.dto.response.ApiResponse;
 import com.vuongdev.Storeclothes.dto.response.OrderListResponse;
 import com.vuongdev.Storeclothes.dto.response.OrderResponse;
+import com.vuongdev.Storeclothes.enums.OrderStatus;
 import com.vuongdev.Storeclothes.service.OrderService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -86,6 +88,34 @@ public class OrderController {
     public ApiResponse<List<OrderResponse>> getOrdersForToday() {
         return ApiResponse.<List<OrderResponse>>builder()
                 .result(orderService.getOrdersForToday())
+                .build();
+    }
+
+    @PutMapping("/status/{id}")
+    ApiResponse<OrderResponse> updateStatusOrder(@PathVariable Long id, @RequestBody OrderUpdateRequest request){
+        return ApiResponse.<OrderResponse>builder()
+                .result(orderService.updateStatusOrder(request, id))
+                .build();
+    }
+
+    @GetMapping("/status")
+    public ApiResponse<Page<OrderResponse>> getOrdersByStatus(
+            @RequestParam OrderStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ApiResponse.<Page<OrderResponse>>builder()
+                .result(orderService.getOrdersByStatus(status, page, size))
+                .build();
+    }
+
+
+    @GetMapping("/code-phone")
+    ApiResponse<OrderResponse> findByOrderCodeAndPhoneNumber(
+            @RequestParam String orderCode,
+            @RequestParam String phoneNumber) {
+        return ApiResponse.<OrderResponse>builder()
+                .result(orderService.findByOrderCodeAndPhoneNumber(orderCode, phoneNumber))
                 .build();
     }
 }

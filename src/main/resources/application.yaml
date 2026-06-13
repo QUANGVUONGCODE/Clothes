@@ -19,6 +19,19 @@ spring:
       hibernate:
         format_sql: true
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_APP_PASSWORD}
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 api:
   prefix: /api/v1
 
@@ -30,3 +43,21 @@ jwt:
   signerKey: "1NsF6CQZPFZRT81vRC1RMOXgwk3MtxLbGE2Cx0Dcu591nRTOxjsbNqDHVbhf3wYS"
   valid-duration: 3600000
   refresh-duration: 86400000
+
+vnpay:
+  pay-url: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+  return-url: "http://localhost:5177/payments/payment-callback"   # full url
+  tmn-code: "NHAG4VXF"
+  secret-key: "PG3FXX33P1WZW0SV79JR81C2LFNZ5R1T"
+  api-url: "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction"
+
+gemini:
+  api:
+    key: "AIzaSyC69ucMcpp85S7jn3txjECzDJdGMmxMI-4"   # ← Dán key của bạn vào đây
+  model: "gemini-2.5-flash"
+
+
+
+
+chatbot:
+  system-prompt: "Bạn là trợ lý bán hàng quần áo thời trang. Trả lời bằng tiếng Việt, vui vẻ, nhiệt tình, ngắn gọn và chuyên nghiệp."

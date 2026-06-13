@@ -47,8 +47,13 @@ public enum ErrorCode {
     INVALID_PAYMENT_ID(1037, "Invalid payment id", HttpStatus.BAD_REQUEST),
     USER_ID_REQUIRED(1038, "User id required", HttpStatus.BAD_REQUEST),
     INVALID_ORDER_ID(1039, "Invalid order id", HttpStatus.BAD_REQUEST),
-
-
+    INVALID_CHAT_REQUEST(1040, "The message cannot be left blank.", HttpStatus.BAD_REQUEST),
+    INSUFFICIENT_STOCK(1041, "Insufficient stock", HttpStatus.BAD_REQUEST),
+    ORDER_NOT_FOUND_CODE_PHONE(1042, "Order not found by order code and phone number", HttpStatus.BAD_REQUEST),
+    INVALID_ID_REVIEW(1043, "Invalid review id", HttpStatus.BAD_REQUEST),
+    ORDER_NOT_COMPLETED(1044, "Order not completed", HttpStatus.BAD_REQUEST),
+    REVIEW_ALREADY_EXISTS(1045, "Review already exists", HttpStatus.BAD_REQUEST),
+    REVIEW_NOT_FOUND(1046, "Review not found", HttpStatus.BAD_REQUEST)
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode){

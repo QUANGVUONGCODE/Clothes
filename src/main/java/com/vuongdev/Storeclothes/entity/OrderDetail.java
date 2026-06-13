@@ -30,6 +30,9 @@ public class OrderDetail {
     @Column(name = "price", nullable = false)
     BigDecimal price;
 
+    @Column(name = "active")
+    Boolean active;
+
     @Column(name = "quantity", nullable = false)
     Integer quantity;
 

@@ -1,11 +1,14 @@
 package com.vuongdev.Storeclothes.repository;
 
 import com.vuongdev.Storeclothes.entity.Order;
+import com.vuongdev.Storeclothes.enums.OrderStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.util.Optional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -19,6 +22,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "o.fullName LIKE %:keyword% OR o.phoneNumber LIKE %:keyword% OR o.status LIKE %:keyword% OR o.orderCode LIKE %:keyword%)")
     Page<Order> findByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
+
+
+
     boolean existsByIdAndUser_Id(Long orderId, Long userId);
 
     boolean existsById(Long orderId);
@@ -27,6 +33,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findByOrderDateBetween(LocalDateTime startOfToday, LocalDateTime endOfToday);
 
+    Optional<Order> findByOrderCode(String orderCode);
+    Optional<Order> findByVnpTxnRef(String txnRef);
 
     long countByStatus(String status);
 
@@ -57,5 +65,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
     );
+
+    Page<Order> findByStatus(OrderStatus status, Pageable pageable);
+
+    Optional<Order> findByOrderCodeAndPhoneNumber(String orderCode, String phoneNumber);
 }
 

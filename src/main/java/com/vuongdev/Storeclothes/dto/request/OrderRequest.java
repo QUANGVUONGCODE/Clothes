@@ -45,4 +45,7 @@ public class OrderRequest {
 
     @JsonProperty("payment_id")
     Long paymentId;
+
+    @JsonProperty("vnp_txn_ref")
+    String vnpTxnRef;
 }
