@@ -30,7 +30,8 @@ public class SercurityConfig {
             api + "/auth/log-in",
             api +"/auth/introspect",
             api +"/auth/refresh",
-            api +"/auth/logout"
+            api +"/auth/logout",
+            api +"/payments/create_payment_url"
     };
 
     @Autowired
@@ -51,6 +52,10 @@ public class SercurityConfig {
     private static final String dashboardEntryPoint = "/dashboard";
     private static final String colorEntryPoint = "/colors";
     private static final String sizeEntryPoint = "/sizes";
+    private static final String chatEntryPoint = "/chat";
+    private static final String reviewEntryPoint = "/reviews";
+    private static final String invoiceEntryPoint = "/invoices";
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception{
         log.info("=== Security Filter Chain Debug ===");
@@ -92,6 +97,8 @@ public class SercurityConfig {
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, api + productVariant + "/by-ids" + "/**")
                         .permitAll()
+                        .requestMatchers(HttpMethod.PUT, api + productVariant + "/**")
+                        .hasRole(RolePlay.ADMIN.name())
 
 
 
@@ -107,6 +114,16 @@ public class SercurityConfig {
                         .requestMatchers(HttpMethod.DELETE, api + paymentEntryPoint +"/{id}")
                         .hasRole(RolePlay.ADMIN.name())
 
+                        .requestMatchers(HttpMethod.POST, api + paymentEntryPoint +"/create_payment_url")
+                        .hasAnyRole(RolePlay.ADMIN.name(), RolePlay.USER.name())
+                        .requestMatchers(HttpMethod.POST, api + paymentEntryPoint +"/refund")
+                        .hasAnyRole(RolePlay.ADMIN.name(), RolePlay.USER.name())
+                        .requestMatchers(HttpMethod.POST, api + paymentEntryPoint +"/query")
+                        .hasAnyRole(RolePlay.ADMIN.name(), RolePlay.USER.name())
+                        .requestMatchers(HttpMethod.POST, api + paymentEntryPoint + "/result/{txnRef}")
+                        .hasAnyRole(RolePlay.ADMIN.name(), RolePlay.USER.name())
+                        .requestMatchers(HttpMethod.GET, api + paymentEntryPoint + "/return")
+                        .permitAll()
                         //Order
                         .requestMatchers(HttpMethod.GET, api + orderEntryPoint + "/**")
                         .hasAnyRole(RolePlay.ADMIN.name(), RolePlay.USER.name())
@@ -118,6 +135,12 @@ public class SercurityConfig {
                         .hasAnyRole(RolePlay.ADMIN.name(), RolePlay.USER.name())
                         .requestMatchers(HttpMethod.GET, api + orderDetailEntryPoint + "/**")
                         .hasAnyRole(RolePlay.ADMIN.name(), RolePlay.USER.name())
+                        .requestMatchers(HttpMethod.PUT, api + orderEntryPoint + "/**")
+                        .hasAnyRole(RolePlay.ADMIN.name(), RolePlay.USER.name())
+
+                        .requestMatchers(HttpMethod.GET, api + orderEntryPoint + "/code-phone")
+                        .hasAnyRole(RolePlay.ADMIN.name(), RolePlay.USER.name())
+
 
 
                         //orderDetail
@@ -140,7 +163,7 @@ public class SercurityConfig {
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, api + productImageEntryPoint + "/**")
                         .hasRole(RolePlay.ADMIN.name())
-                        .requestMatchers(HttpMethod.DELETE, api + productImageEntryPoint )
+                        .requestMatchers(HttpMethod.DELETE, api + productImageEntryPoint + "/**" )
                         .hasRole(RolePlay.ADMIN.name())
 
 
@@ -149,6 +172,8 @@ public class SercurityConfig {
                         .hasRole(RolePlay.ADMIN.name())
                         .requestMatchers(HttpMethod.GET, api + departmentEntryPoint + "/**")
                         .permitAll()
+                        .requestMatchers(HttpMethod.DELETE, api + departmentEntryPoint + "/{id}")
+                        .hasRole(RolePlay.ADMIN.name())
 
 
                         //category
@@ -189,6 +214,39 @@ public class SercurityConfig {
 
                         .requestMatchers(HttpMethod.GET, api + sizeEntryPoint)
                         .permitAll()
+                        .requestMatchers(HttpMethod.POST, api + sizeEntryPoint)
+                        .hasRole(RolePlay.ADMIN.name())
+                        .requestMatchers(HttpMethod.DELETE, api + sizeEntryPoint + "/{id}")
+                        .hasRole(RolePlay.ADMIN.name())
+
+
+
+                        //review
+                        .requestMatchers(HttpMethod.POST, api + reviewEntryPoint)
+                        .hasRole(RolePlay.USER.name())
+                        .requestMatchers(HttpMethod.GET, api + reviewEntryPoint + "/**")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.PUT, api + reviewEntryPoint + "/{id}")
+                        .hasRole(RolePlay.USER.name())
+                        .requestMatchers(HttpMethod.DELETE, api + reviewEntryPoint + "/{id}")
+                        .hasRole(RolePlay.USER.name())
+                        .requestMatchers(HttpMethod.GET, api + reviewEntryPoint + "/user/{userId}")
+                        .hasRole(RolePlay.USER.name())
+                        .requestMatchers(HttpMethod.GET, api + reviewEntryPoint + "/product/{productId}/summary")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, api + reviewEntryPoint + "/one")
+                        .hasRole(RolePlay.USER.name())
+
+                        //Chat
+
+                        .requestMatchers(HttpMethod.POST, api + chatEntryPoint)
+                        .permitAll()
+
+                        //Invoice
+
+                        .requestMatchers(HttpMethod.GET, api + invoiceEntryPoint + "/order-code/{orderCode}")
+                        .hasAnyRole(RolePlay.USER.name(), RolePlay.ADMIN.name())
+
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwtConfigurer -> jwtConfigurer
@@ -222,7 +280,7 @@ public class SercurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource(){
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.addAllowedOrigin("http://localhost:5178");
+        corsConfiguration.addAllowedOrigin("http://localhost:5177");
         corsConfiguration.addAllowedMethod("*");
         corsConfiguration.addAllowedHeader("*");
         corsConfiguration.setAllowCredentials(true);

@@ -28,6 +28,8 @@ public class OrderDetailResponse {
 
     Integer quantity;
 
+    Boolean active;
+
     @JsonProperty("total_money")
     BigDecimal totalMoney;
 }

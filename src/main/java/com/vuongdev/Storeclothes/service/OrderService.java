@@ -4,13 +4,9 @@ import com.vuongdev.Storeclothes.dto.request.CartRequest;
 import com.vuongdev.Storeclothes.dto.request.OrderRequest;
 import com.vuongdev.Storeclothes.dto.request.OrderUpdateRequest;
 import com.vuongdev.Storeclothes.dto.response.OrderResponse;
-import com.vuongdev.Storeclothes.entity.Order;
-import com.vuongdev.Storeclothes.entity.OrderDetail;
-import com.vuongdev.Storeclothes.entity.Payment;
-import com.vuongdev.Storeclothes.entity.Product;
-import com.vuongdev.Storeclothes.entity.ProductVariant;
-import com.vuongdev.Storeclothes.entity.User;
+import com.vuongdev.Storeclothes.entity.*;
 import com.vuongdev.Storeclothes.enums.OrderStatus;
+import com.vuongdev.Storeclothes.enums.PaymentStatus;
 import com.vuongdev.Storeclothes.exception.AppException;
 import com.vuongdev.Storeclothes.exception.ErrorCode;
 import com.vuongdev.Storeclothes.mapper.OrderDetailMapper;
@@ -20,7 +16,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,9 +42,11 @@ public class OrderService {
     OrderDetailMapper orderDetailMapper;
     OrderDetailRepository orderDetailRepository;
     OrderDetailService orderDetailService;
+    EmailService emailService;
+    InvoiceService invoiceService;
 
     @Transactional
-    public OrderResponse createOrder(OrderRequest request){
+    public OrderResponse createOrder(OrderRequest request) {
         User user = userRepository.findById(request.getUserId()).orElseThrow(
                 () -> new AppException(ErrorCode.INVALID_USER_ID)
         );
@@ -60,12 +60,20 @@ public class OrderService {
         order.setPayment(payment);
         order.setAddress(request.getAddress());
         order.setStatus(OrderStatus.PENDING.name());
+
         order.setOrderDate(
                 request.getOrderDate() != null ? request.getOrderDate() : LocalDateTime.now()
         );
+
+        // Phân biệt COD và E_WALLET
+        if (isEWalletPayment(payment)) {
+            order.setPaymentStatus(PaymentStatus.PENDING_PAYMENT.name());
+        } else {
+            order.setPaymentStatus(PaymentStatus.UNPAID.name());
+        }
+
         order = orderRepository.save(order);
 
-        List<OrderDetail> orderDetails = new ArrayList<>();
         BigDecimal totalMoney = BigDecimal.ZERO;
 
         for (var cartItem : request.getCartItems()) {
@@ -78,20 +86,56 @@ public class OrderService {
             BigDecimal price = product.getPrice();
             Integer quantity = cartItem.getQuantity();
 
+            if (productVariant.getStockQuantity() == 0 || productVariant.getStockQuantity() < quantity) {
+                throw new AppException(ErrorCode.INSUFFICIENT_STOCK);
+            }
+
+            productVariant.setStockQuantity(productVariant.getStockQuantity() - quantity);
+            productVariantRepository.save(productVariant);
+
             OrderDetail orderDetail = orderDetailMapper.mapToOrderDetail2(cartItem);
             orderDetail.setOrder(order);
             orderDetail.setProductVariant(productVariant);
             orderDetail.setPrice(price);
             orderDetail.setTotalMoney(price.multiply(BigDecimal.valueOf(quantity)));
+
             totalMoney = totalMoney.add(orderDetail.getTotalMoney());
+
             orderDetailRepository.save(orderDetail);
-            orderDetailMapper.mapToOrderDetailResponse(orderDetail);
         }
 
         order.setTotalMoney(totalMoney);
-        orderRepository.save(order);
+        order = orderRepository.save(order);
+
+        // COD: gửi mail xác nhận đơn hàng
+        // Nếu mail lỗi thì chỉ log, không làm rollback order
+        if (isCodPayment(payment)) {
+            try {
+                emailService.sendCodOrderConfirmationEmail(order);
+            } catch (Exception e) {
+                System.out.println("Gửi email xác nhận COD thất bại: " + e.getMessage());
+            }
+        }
+
+        // E_WALLET: KHÔNG gửi mail ở đây
+        // Đợi VNPay thanh toán thành công rồi mới gửi hóa đơn ở updateOrderWithVNPayTxnRef()
+
         return orderMapper.mapToOrderResponse(order);
     }
+
+    private boolean isCodPayment(Payment payment) {
+        return payment != null
+                && payment.getName() != null
+                && payment.getName().equalsIgnoreCase("COD");
+    }
+
+    private boolean isEWalletPayment(Payment payment) {
+        return payment != null
+                && payment.getName() != null
+                && payment.getName().equalsIgnoreCase("E_WALLET");
+    }
+
+
     
     public OrderResponse getOrderById(Long id){
         Order order = orderRepository.findById(id).orElseThrow(
@@ -104,6 +148,12 @@ public class OrderService {
         return orderRepository.findByKeyword(keyword,pageable).map(orderMapper::mapToOrderResponse);
     }
 
+    public OrderResponse findByOrderCodeAndPhoneNumber(String orderCode, String phoneNumber) {
+
+        Order order = orderRepository.findByOrderCodeAndPhoneNumber(orderCode, phoneNumber)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND_CODE_PHONE));
+        return orderMapper.mapToOrderResponse(order);
+    }
 
     public List<OrderResponse> getOrderByUserId(Long userId){
         User user = userRepository.findById(userId).orElseThrow(
@@ -156,6 +206,7 @@ public class OrderService {
                 Integer quantity = cartRequest.getQuantity();
                 BigDecimal itemTotal = price.multiply(BigDecimal.valueOf(quantity));
 
+
                 OrderDetail orderDetail = orderDetailMapper.mapToOrderDetail2(cartRequest);
                 orderDetail.setOrder(order);
                 orderDetail.setProductVariant(productVariant);
@@ -201,5 +252,55 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
+    public OrderResponse updateStatusOrder(OrderUpdateRequest request, Long orderId){
+        Order order = orderRepository.findById(orderId).orElseThrow(
+                () -> new AppException(ErrorCode.INVALID_ORDER_ID)
+        );
+        OrderStatus newStatus = request.getStatus();
+
+        order.setStatus(newStatus.name());
+
+        /*
+         * Nếu admin bấm "Hoàn thành"
+         * - COD: xem như đã thu tiền
+         * - E_WALLET: thường đã PAID từ VNPay trước đó
+         */
+        if (newStatus == OrderStatus.COMPLETED) {
+
+            // Nếu đơn chưa PAID thì set PAID
+            // Đặc biệt dùng cho COD
+            if (!PaymentStatus.PAID.name().equals(order.getPaymentStatus())) {
+                order.setPaymentStatus(PaymentStatus.PAID.name());
+            }
+
+            Order savedOrder = orderRepository.save(order);
+
+            // Tạo hóa đơn nếu chưa có
+            Invoice invoice = invoiceService.createInvoiceFromOrder(savedOrder);
+
+            // Gửi mail hóa đơn
+            try {
+                emailService.sendPaymentSuccessEmail(savedOrder, invoice);
+            } catch (Exception e) {
+                System.out.println("Gửi email hóa đơn khi hoàn thành đơn thất bại: " + e.getMessage());
+            }
+
+            return orderMapper.mapToOrderResponse(savedOrder);
+        }
+
+        Order savedOrder = orderRepository.save(order);
+
+        return orderMapper.mapToOrderResponse(savedOrder);
+    }
+
+
+    public Page<OrderResponse> getOrdersByStatus(OrderStatus status, int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("orderDate").descending());
+
+        Page<Order> orderPage = orderRepository.findByStatus(status, pageable);
+
+        return orderPage.map(orderMapper::mapToOrderResponse);
+    }
 
 }

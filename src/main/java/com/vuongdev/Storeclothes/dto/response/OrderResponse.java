@@ -44,6 +44,9 @@ public class OrderResponse {
     @JsonProperty("status")
     String status;
 
+    @JsonProperty("payment_status")
+    String paymentStatus;
+
     @JsonProperty("total_money")
     Float totalMoney;
 
@@ -53,4 +56,6 @@ public class OrderResponse {
     @JsonProperty("active")
     Boolean active;
 
+    @JsonProperty("vnp_txn_ref")
+    String vnpTxnRef;
 }
